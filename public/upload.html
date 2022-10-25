@@ -77,17 +77,40 @@
     firebase.initializeApp(firebaseConfig);
 
     const db = firebase.firestore();
+    const storage = firebase.storage();
+
     $('#send').click(() => {
-      let title = $('#title').val();
-      let price = parseInt($('#price').val());
-      let date = new Date();
-      db.collection('product').add({'제목' : title, '가격':price, "날짜" : date}).then((result) => {
-        location.href = "/"
-      }).catch((err) => {
-        console.log(err)
-      });
+
+      let file = document.querySelector('#image').files[0];
+
+      let storageRef = storage.ref();
+      let storageLocation = storageRef.child('image/' + file.name)
+      let uploadMethod = storageLocation.put(file)
+
+      uploadMethod.on('state_changed',
+        // 변화시 동작하는 함수 (upload percentage)
+        null,
+        //에러시 동작하는 함수
+        (error) => {
+          console.error('실패사유는', error);
+        },
+        // 성공시 동작하는 함수
+        () => {
+          uploadMethod.snapshot.ref.getDownloadURL().then((url) => {
+            let title = $('#title').val();
+            let price = parseInt($('#price').val());
+            let date = new Date();
+            db.collection('product').add({ '제목': title, '가격': price, "날짜": date, "이미지": url}).then((result) => {
+              location.href = "/"
+            }).catch((err) => {
+              console.log(err)
+            });
+          });
+        }
+      );
+      
     })
-  
+
   </script>
 </body>
 
